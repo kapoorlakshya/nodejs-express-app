@@ -26,7 +26,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', function (req, res, next) {
     res.render('index', {title: "Saas Tutorial"})
-})
+});
+
+app.get('/main', function (req, res, next) {
+    res.render('main')
+});
+
+app.get('/login-page', function (req, res, next) {
+    res.render('login-page')
+});
 
 app.post('/signup', function (req, res, next) {
     User.findOne({
@@ -39,7 +47,10 @@ app.post('/signup', function (req, res, next) {
             email: req.body.email,
             passwordHash: bcrypt.hashSync(req.body.password, 10)
         });
-        newUser.save();
+        newUser.save(function(err) {
+            if (err) return next(err);
+            res.redirect('/main');
+        });
     });
 
     console.log(req.body);
