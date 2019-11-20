@@ -3,9 +3,13 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+require('./models');
+
+var User = mongoose.model("User");
+
+mongoose.connect('mongodb://localhost:27017/mongo-data', { useNewUrlParser: true, useUnifiedTopology: true });
 
 var app = express();
 
@@ -19,8 +23,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.get('/', function(req, res, next) {
+    res.render('index', {title: "Saas Tutorial"})
+})
+
+app.post('/signup', function(req, res, next) {
+    console.log(req.body)
+})
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
