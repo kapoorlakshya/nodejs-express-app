@@ -48,6 +48,26 @@ passport.use(new LocalStrategy({
     })
 }));
 
+passport.use("signup-local", new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+}, function (email, password, next) {
+    User.findOne({
+        email: email
+    }, function (err, user) {
+        if (err) return next(err);
+        if (user) return (next({message: "User already exists"}));
+
+        let newUser = new User({
+            email: email,
+            passwordHash: bcrypt.hashSync(password, 10)
+        });
+        newUser.save(function (err) {
+            next(err, newUser);
+        });
+    });
+}));
+
 passport.serializeUser((function (user, next) {
     next(null, user.id);
 }));
@@ -76,25 +96,11 @@ app.get('/login-page', function (req, res, next) {
     res.render('login-page')
 });
 
-app.post('/signup', function (req, res, next) {
-    User.findOne({
-        email: req.body.email
-    }, function (err, user) {
-        if (err) return next(err);
-        if (user) return (next({message: "User already exists"}));
-
-        let newUser = new User({
-            email: req.body.email,
-            passwordHash: bcrypt.hashSync(req.body.password, 10)
-        });
-        newUser.save(function (err) {
-            if (err) return next(err);
-            res.redirect('/main');
-        });
+app.post('/signup',
+    passport.authenticate('signup-local', {failureRedirect: '/'}),
+    function (req, res) {
+        res.redirect('/main');
     });
-
-    console.log(req.body);
-});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
