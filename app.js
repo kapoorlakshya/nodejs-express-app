@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
+var expressSession = require('express-session');
 
 require('./models');
 
@@ -18,11 +19,15 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(expressSession({
+    secret: "asdad21312zsdh102uy4-123asdjas-123123"
+}));
 
 app.get('/', function (req, res, next) {
     res.render('index', {title: "Saas Tutorial"})
