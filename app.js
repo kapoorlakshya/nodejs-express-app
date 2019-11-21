@@ -6,6 +6,8 @@ var logger = require('morgan');
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
 var expressSession = require('express-session');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 
 require('./models');
 
@@ -28,6 +30,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(expressSession({
     secret: "asdad21312zsdh102uy4-123asdjas-123123"
 }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+}, function (email, password, next) {
+    User.findOne({
+        email: email
+    }, function (err, user) {
+        if (err) return next(err);
+        if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+            return next({message: 'Email or password incorrect.'})
+        }
+        next(null, user);
+    })
+}));
+
+passport.serializeUser((function (user, next) {
+    next(null, user.id);
+}));
+
+passport.deserializeUser(function (id, next) {
+    User.findById(id, function (err, user) {
+        next(err, user);
+    })
+});
 
 app.get('/', function (req, res, next) {
     res.render('index', {title: "Saas Tutorial"})
@@ -36,6 +65,12 @@ app.get('/', function (req, res, next) {
 app.get('/main', function (req, res, next) {
     res.render('main')
 });
+
+app.post('/login',
+    passport.authenticate('local', {failureRedirect: '/login-page'}),
+    function (req, res) {
+        res.redirect('/main');
+    });
 
 app.get('/login-page', function (req, res, next) {
     res.render('login-page')
@@ -52,7 +87,7 @@ app.post('/signup', function (req, res, next) {
             email: req.body.email,
             passwordHash: bcrypt.hashSync(req.body.password, 10)
         });
-        newUser.save(function(err) {
+        newUser.save(function (err) {
             if (err) return next(err);
             res.redirect('/main');
         });
